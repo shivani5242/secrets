@@ -3,7 +3,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-
+const encrypt = require("mongoose-encryption");
 const app = express();
 
 app.set('view engine', 'ejs');
@@ -16,6 +16,11 @@ const userSchema=new mongoose.Schema({
     email:String,
     password:String
 });
+const secrets="thisisoursecret";
+userSchema.plugin(encrypt, { secret: secrets, encryptedFields:["password"] });
+
+
+
 const User=mongoose.model("User",userSchema);
 
 
@@ -50,17 +55,22 @@ res.render("secrets");
 });
 
 app.post("/login", function(req,res){
-
+  
 const eamil=req.body.username;
 const password=req.body.password;
-User.findOne({email:req.body.username, password:req.body.password}, function(err, foundUsers){
-    if(!foundUsers){
-      
+User.findOne({email:req.body.username}, function(err, foundUsers){
+    if(!err){
+      if(foundUsers.password===req.body.password){
+        res.render("secrets");
+      }
+      else{
         res.render("register", {err:"OOPs you don't have an account"});
+      }
+       
       
     }
     else{
-        res.render("secrets");
+       console.log(err)
     }
 })
    
